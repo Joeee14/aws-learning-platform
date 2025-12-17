@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports: ["2181:2181"]
+
+  kafka:
+    image: wurstmeister/kafka
+    ports: ["9092:9092"]
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on: [zookeeper]
+
+  doc-service:
+    build: ./doc-service
+    ports: ["8001:8001"]
+    environment: &aws_env
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_DEFAULT_REGION=us-east-1
+      - KAFKA_SERVER=kafka:9092
+    depends_on: [kafka]
+
+  stt-service:
+    build: ./stt-service
+    ports: ["8002:80"]
+    environment: *aws_env
+
+  tts-service:
+    build: ./tts-service
+    ports: ["8003:80"]
+    environment: *aws_env
+
+  quiz-service:
+    build: ./quiz-service
+    ports: ["8004:80"]
+    environment: *aws_env
+
+  chat-service:
+    build: ./chat-service
+    ports: ["8005:80"]
+    environment: *aws_env
+
+  api-gateway:
+    build: ./api-gateway
+    ports: ["8000:80"]
+    environment: *aws_env
